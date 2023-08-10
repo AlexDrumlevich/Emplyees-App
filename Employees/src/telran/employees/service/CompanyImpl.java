@@ -51,16 +51,17 @@ public class CompanyImpl implements Company {
 	@Override
 	public List<SalaryDistribution> getSalaryDistribution(int interval) {
 		return employees
-			.entrySet()
+			.values()
 			.stream()
-			.collect(Collectors.groupingBy(entry -> 
-				    Integer.valueOf(entry.getValue().salary() / interval), 
+			.collect(Collectors.groupingBy(employee -> 
+				    Integer.valueOf(employee.salary() / interval), 
 					Collectors.counting()))
 			.entrySet()
 			.stream()
 			.filter(entry -> entry.getValue() != 0)
 			.map(entry -> new SalaryDistribution(entry.getKey() * interval, entry.getKey() * interval + interval - 1, entry.getValue().intValue()))
 			.toList();
+
 	}
 
 	@Override
@@ -72,6 +73,8 @@ public class CompanyImpl implements Company {
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		}
+		
+		
 	}
 	
 	@Override
