@@ -1,24 +1,23 @@
 package telran.employees.service;
-
-import java.util.List;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
-
 import telran.employees.dto.DepartmentSalary;
 import telran.employees.dto.Employee;
 import telran.employees.dto.SalaryDistribution;
-
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.security.KeyStore.Entry;
 import java.util.*;
+
+
 public class CompanyImpl implements Company {
-  LinkedHashMap<Long, Employee> employees = new LinkedHashMap<>();
-  TreeMap<Integer, Collection<Employee>> employeesSalary = new TreeMap<>();
- 
+
+	private LinkedHashMap<Long, Employee> employees = new LinkedHashMap<>();
+	private TreeMap<Integer, Collection<Employee>> employeesSalary = new TreeMap<>();
+	private Map<String, Collection<Employee>> employeesDepartment = new HashMap<>();
+  
+  //ADD
   @Override
 	public boolean addEmployee(Employee empl) {
 		boolean res = false;
@@ -26,6 +25,7 @@ public class CompanyImpl implements Company {
 		if(emplRes == null) {
 			res = true;
 			addEmployeeSalary(empl);
+			addEmployeeDepartment(empl);
 		}
 		return  res;
 	}
@@ -35,12 +35,19 @@ public class CompanyImpl implements Company {
 		employeesSalary.computeIfAbsent(salary, k -> new HashSet<>()).
 		add(empl);
 	}
-
+	private void addEmployeeDepartment(Employee empl) {
+		String department = empl.department();
+		employeesDepartment.computeIfAbsent(department, k -> new HashSet<>()).
+		add(empl);
+	}
+	
+	//REMOVE
 	@Override
 	public Employee removeEmployee(long id) {
 		Employee res = employees.remove(id);
 		if(res != null) {
 			removeEmployeeSalary(res);
+			removeEmployeeDepartment(res);
 		}
 		return res;
 	}
@@ -51,6 +58,14 @@ public class CompanyImpl implements Company {
 		employeesCol.remove(empl);
 		if(employeesCol.isEmpty()) {
 			employeesSalary.remove(salary);
+		}	
+	}
+	private void removeEmployeeDepartment(Employee empl) {
+		String department = empl.department();
+		Collection<Employee> employeesCol = employeesDepartment.get(department);
+		employeesCol.remove(empl);
+		if(employeesCol.isEmpty()) {
+			employeesDepartment.remove(department);
 		}	
 	}
 	
@@ -113,9 +128,18 @@ public class CompanyImpl implements Company {
 	}
 
 	@Override
-	public List<Employee> getEmployeesByDepartment(String department) {
-		// TODO Auto-generated method stub
-		return null;
+	public List<Employee> getEmployeesByDepartment(String department) {		
+		List<Employee> listEmployee;
+		Collection<Employee> collectionEmployees = employeesDepartment.get(department);
+		if(collectionEmployees != null) {
+			if(collectionEmployees instanceof List)
+				listEmployee = (List<Employee>)collectionEmployees;
+			else
+				listEmployee = new ArrayList<Employee>(collectionEmployees);
+		} else {
+			listEmployee = new ArrayList<>();
+		}
+		return listEmployee;
 	}
 
 	@Override

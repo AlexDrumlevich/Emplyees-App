@@ -56,6 +56,7 @@ class CompanyTest {
 		assertTrue(company.addEmployee(new Employee(ID_NOT_EXIST, "name", DEP1, SALARY1, DATE1)));
 	}
 
+	
 	@Test
 	void testRemoveEmployee() {
 		assertNull(company.removeEmployee(ID_NOT_EXIST));
@@ -122,4 +123,27 @@ class CompanyTest {
 		company.save(TEST_DATA);
 	}
 
+	
+	@Test
+	void getEmployesByDepartment() {
+		Employee[] expectedDep1_1 = {empl1, empl3};
+		Employee[] actualDep1_1 = company.getEmployeesByDepartment(DEP1).stream().sorted((e1, e2) -> Long.compare(e1.id(), e2.id())).toArray(Employee[]::new);
+		assertArrayEquals(expectedDep1_1, actualDep1_1);
+		
+		Employee[] expectedDep1_2 = {empl3};
+		company.removeEmployee(empl1.id());
+		Employee[] actualDep1_2 = company.getEmployeesByDepartment(DEP1).stream().sorted((e1, e2) -> Long.compare(e1.id(), e2.id())).toArray(Employee[]::new);
+		assertArrayEquals(expectedDep1_2, actualDep1_2);
+		
+		company.removeEmployee(empl3.id());
+		Employee[] actualDep1_3 = company.getEmployeesByDepartment(DEP1).stream().sorted((e1, e2) -> Long.compare(e1.id(), e2.id())).toArray(Employee[]::new);
+		assertTrue(actualDep1_3.length == 0);
+		
+		company.addEmployee(empl1);
+		Employee[] expectedDep1_4 = {empl1};
+		Employee[] actualDep1_4 = company.getEmployeesByDepartment(DEP1).stream().sorted((e1, e2) -> Long.compare(e1.id(), e2.id())).toArray(Employee[]::new);
+		assertArrayEquals(expectedDep1_4, actualDep1_4);
+		
+	}
+	
 }
