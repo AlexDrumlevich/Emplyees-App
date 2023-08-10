@@ -3,7 +3,6 @@ package telran.employees.test;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.LocalDate;
-import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer;
@@ -37,7 +36,7 @@ class CompanyTest {
 	private static final String TEST_DATA = "test.data";
 	Employee empl1 = new Employee(ID1, "name", DEP1, SALARY1, DATE1);
 	Employee empl2 = new Employee(ID2, "name", DEP2, SALARY2, DATE2);
-	Employee empl3 = new Employee(ID3, "name", DEP1, SALARY2, DATE1);
+	Employee empl3 = new Employee(ID3, "name", DEP1, SALARY1, DATE1);
 	Employee empl4 = new Employee(ID4, "name", DEP2, SALARY2, DATE2);
 	Employee empl5 = new Employee(ID5, "name", DEP3, SALARY3, DATE3);
 	Employee[] employees = {empl1, empl2, empl3, empl4, empl5};
@@ -81,44 +80,30 @@ class CompanyTest {
 
 	@Test
 	void testGetDepartmentSalaryDistribution() {
-		company.getDepartmentSalaryDistribution()
-			.stream()
-			.forEach(d -> { 
-				switch (d.department()) {
-					case DEP1:
-						assertEquals(7500d, d.salary());
-						break;
-					case DEP2:
-						assertEquals(5000d, d.salary());
-						break;
-					case DEP3:
-						assertEquals(15000d, d.salary());
-						break;
-				}
-			}
-		);
+		DepartmentSalary [] expected = {
+			new DepartmentSalary(DEP2, SALARY2),
+			new DepartmentSalary(DEP1, SALARY1),
+			new DepartmentSalary(DEP3, SALARY3)
+		};
+		DepartmentSalary [] actual = company.getDepartmentSalaryDistribution()
+				.stream().sorted((ds1, ds2) -> Double.compare(ds1.salary(), ds2.salary())).
+				toArray(DepartmentSalary[]::new);
+		assertArrayEquals(expected, actual);
 	}
 
 	@Test
 	void testGetSalaryDistribution() {
-		company.getSalaryDistribution(1000).stream()
-			.forEach(salaryDistribution -> {
-				switch (salaryDistribution.minSalary()) {
-				case 5000:
-					assertEquals(3, salaryDistribution.amountEmployees());
-					assertEquals(5999, salaryDistribution.maxSalary());
-					break;
-				case 7000:
-					assertEquals(1, salaryDistribution.amountEmployees());
-					assertEquals(7999, salaryDistribution.maxSalary());
-					break;
-				case 15000:
-					assertEquals(1, salaryDistribution.amountEmployees());
-					assertEquals(15999, salaryDistribution.maxSalary());
-					break;
-				}
-			});
-				assertEquals(3, company.getSalaryDistribution(1000).size());	
+		int interval = 5000;
+		SalaryDistribution[] expected = {
+				new SalaryDistribution(SALARY2, SALARY2 + interval - 1, 2),
+				new SalaryDistribution(SALARY1, SALARY1 + interval - 1, 3),
+				new SalaryDistribution(SALARY3, SALARY3 + interval - 1, 1),
+		};
+		company.addEmployee(new Employee(ID_NOT_EXIST, DEP2, DEP2, 13000,  DATE1));
+		SalaryDistribution[] actual =
+				company.getSalaryDistribution(interval)
+				.toArray(SalaryDistribution[]::new);
+		assertArrayEquals(expected, actual);
 	}
 
 	@Test
