@@ -146,4 +146,36 @@ class CompanyTest {
 		
 	}
 	
+	
+	@Test
+	void getEmployeesBySalary() {
+		assertTrue(company.getEmployeesBySalary(0, 1000).isEmpty());
+		assertTrue(company.getEmployeesBySalary(15001, 10000000).isEmpty());
+		
+		Employee[] expectedSalary1 = {empl2, empl4};
+		assertArrayEquals(expectedSalary1, 
+				company.getEmployeesBySalary(0, 5000)
+					.stream()
+					.sorted((e1, e2) -> Long.compare(e1.id(), e2.id()))
+					.toArray(Employee[]::new));
+		
+		assertArrayEquals(expectedSalary1, 
+				company.getEmployeesBySalary(5000, 5000)
+					.stream()
+					.sorted((e1, e2) -> Long.compare(e1.id(), e2.id()))
+					.toArray(Employee[]::new));
+		
+		Employee[] expectedSalary2 = {empl1, empl3, empl5};
+		assertArrayEquals(expectedSalary2, 
+				company.getEmployeesBySalary(10000, 15000)
+					.stream()
+					.sorted((e1, e2) -> Long.compare(e1.id(), e2.id()))
+					.toArray(Employee[]::new));
+		
+		assertThrowsExactly(IllegalArgumentException.class, () -> company.getEmployeesBySalary(10, 9));
+		assertThrowsExactly(IllegalArgumentException.class, () -> company.getEmployeesBySalary(-1, 9));
+		assertThrowsExactly(IllegalArgumentException.class, () -> company.getEmployeesBySalary(10, -9));
+		
+	}
+	
 }

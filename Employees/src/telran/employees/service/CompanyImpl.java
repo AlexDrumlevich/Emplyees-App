@@ -8,6 +8,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.security.KeyStore.Entry;
+import java.time.temporal.Temporal;
 import java.util.*;
 
 
@@ -129,23 +131,34 @@ public class CompanyImpl implements Company {
 
 	@Override
 	public List<Employee> getEmployeesByDepartment(String department) {		
-		List<Employee> listEmployee;
+		//complexity O[1] if employeesDepartment implements List
 		Collection<Employee> collectionEmployees = employeesDepartment.get(department);
+		List<Employee> listEmployee;
 		if(collectionEmployees != null) {
 			if(collectionEmployees instanceof List)
 				listEmployee = (List<Employee>)collectionEmployees;
 			else
-				listEmployee = new ArrayList<Employee>(collectionEmployees);
+				listEmployee = collectionEmployees.stream().toList();
 		} else {
 			listEmployee = new ArrayList<>();
 		}
 		return listEmployee;
+		
+		//the other way complexity O[n] or O[1] ?
+		//return employeesDepartment.get(department).stream().toList();
 	}
 
 	@Override
 	public List<Employee> getEmployeesBySalary(int salaryFrom, int salaryTo) {
-		// TODO Auto-generated method stub
-		return null;
+		if(salaryFrom > salaryTo || salaryFrom < 0) {
+			throw new IllegalArgumentException();
+		}
+		return employeesSalary
+					.subMap(salaryFrom, true, salaryTo, true)
+					.values()
+					.stream()
+					.flatMap(e -> e.stream())
+					.toList();
 	}
 
 	@Override
