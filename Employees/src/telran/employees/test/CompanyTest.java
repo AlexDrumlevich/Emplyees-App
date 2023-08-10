@@ -125,7 +125,7 @@ class CompanyTest {
 
 	
 	@Test
-	void getEmployesByDepartment() {
+	void getEmployesByDepartmentTest() {
 		Employee[] expectedDep1_1 = {empl1, empl3};
 		Employee[] actualDep1_1 = company.getEmployeesByDepartment(DEP1).stream().sorted((e1, e2) -> Long.compare(e1.id(), e2.id())).toArray(Employee[]::new);
 		assertArrayEquals(expectedDep1_1, actualDep1_1);
@@ -148,7 +148,7 @@ class CompanyTest {
 	
 	
 	@Test
-	void getEmployeesBySalary() {
+	void getEmployeesBySalaryTest() {
 		assertTrue(company.getEmployeesBySalary(0, 1000).isEmpty());
 		assertTrue(company.getEmployeesBySalary(15001, 10000000).isEmpty());
 		
@@ -176,6 +176,12 @@ class CompanyTest {
 		assertThrowsExactly(IllegalArgumentException.class, () -> company.getEmployeesBySalary(-1, 9));
 		assertThrowsExactly(IllegalArgumentException.class, () -> company.getEmployeesBySalary(10, -9));
 		
+	}
+	
+	@Test
+	void updateSalaryTest() {
+		company.updateSalary(ID1, SALARY2);
+		assertEquals(company.getEmployee(ID1).salary(), SALARY2);
 	}
 	
 }
