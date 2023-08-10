@@ -17,17 +17,43 @@ import java.security.KeyStore.Entry;
 import java.util.*;
 public class CompanyImpl implements Company {
   LinkedHashMap<Long, Employee> employees = new LinkedHashMap<>();
-	
+  TreeMap<Integer, Collection<Employee>> employeesSalary = new TreeMap<>();
+ 
   @Override
-	public boolean addEmployee(Employee empl) {		
-		return employees.putIfAbsent(empl.id(), empl) == null;
+	public boolean addEmployee(Employee empl) {
+		boolean res = false;
+		Employee emplRes = employees.putIfAbsent(empl.id(), empl);
+		if(emplRes == null) {
+			res = true;
+			addEmployeeSalary(empl);
+		}
+		return  res;
+	}
+
+	private void addEmployeeSalary(Employee empl) {
+		int salary = empl.salary();
+		employeesSalary.computeIfAbsent(salary, k -> new HashSet<>()).
+		add(empl);
 	}
 
 	@Override
 	public Employee removeEmployee(long id) {
-		return employees.remove(id);
+		Employee res = employees.remove(id);
+		if(res != null) {
+			removeEmployeeSalary(res);
+		}
+		return res;
 	}
 
+	private void removeEmployeeSalary(Employee empl) {
+		int salary = empl.salary();
+		Collection<Employee> employeesCol = employeesSalary.get(salary);
+		employeesCol.remove(empl);
+		if(employeesCol.isEmpty()) {
+			employeesSalary.remove(salary);
+		}	
+	}
+	
 	@Override
 	public Employee getEmployee(long id) {
 		return employees.get(id);
@@ -84,6 +110,36 @@ public class CompanyImpl implements Company {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public List<Employee> getEmployeesByDepartment(String department) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public List<Employee> getEmployeesBySalary(int salaryFrom, int salaryTo) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public List<Employee> getEmployeesByAge(int ageFrom, int ageTo) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Employee updateSalary(long id, int newSalary) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Employee updateDepartment(long id, String newDepartment) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 	
 }
