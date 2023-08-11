@@ -184,4 +184,69 @@ class CompanyTest {
 		assertEquals(company.getEmployee(ID1).salary(), SALARY2);
 	}
 	
+	@Test
+	void updateDepartmenTest() {
+		company.updateDepartment(ID1, DEP2);
+		assertEquals(company.getEmployee(ID1).department(), DEP2);
+	}
+	
+	@Test
+	//has to be corrected depends on time test executing (age changes during the time)
+	void getEmployeesByAgeTest() {
+		assertTrue(company.getEmployeesByAge(10, 12).isEmpty());
+		
+		Employee[] expectedAge1 = employees;
+		assertArrayEquals(expectedAge1, 
+				company.getEmployeesByAge(0, 33)
+					.stream()
+					.sorted((e1, e2) -> Long.compare(e1.id(), e2.id()))
+					.toArray(Employee[]::new));
+		
+		Employee[] expectedAge2 = {empl1, empl3, empl5};
+		assertArrayEquals(expectedAge2, 
+				company.getEmployeesByAge(0, 32)
+					.stream()
+					.sorted((e1, e2) -> Long.compare(e1.id(), e2.id()))
+					.toArray(Employee[]::new));
+		
+		Employee[] expectedAge3 = {empl2, empl4};
+		assertArrayEquals(expectedAge3, 
+				company.getEmployeesByAge(32, 33)
+					.stream()
+					.sorted((e1, e2) -> Long.compare(e1.id(), e2.id()))
+					.toArray(Employee[]::new));
+		
+		
+		//LocalDate has to be corrected 
+			//employee6: current day; current month; current year - 37
+			//employee7: current day-1; current month; current year - 37
+		Employee employee6 = new Employee(6, "6", DEP1, SALARY1, LocalDate.of(1986, 8, 11));
+		Employee employee7 = new Employee(7, "7", DEP1, SALARY1, LocalDate.of(1986, 8, 10));
+		company.addEmployee(employee6);
+		company.addEmployee(employee7);
+		
+		Employee[] expectedAge4 = {employee7};
+		assertArrayEquals(expectedAge4, 
+				company.getEmployeesByAge(37, 38)
+					.stream()
+					.sorted((e1, e2) -> Long.compare(e1.id(), e2.id()))
+					.toArray(Employee[]::new));
+		
+		Employee[] expectedAge5 = {employee6, employee7};
+		assertArrayEquals(expectedAge5, 
+				company.getEmployeesByAge(36, 38)
+					.stream()
+					.sorted((e1, e2) -> Long.compare(e1.id(), e2.id()))
+					.toArray(Employee[]::new));
+	
+		Employee[] expectedAge6 = {employee6};
+		assertArrayEquals(expectedAge6, 
+				company.getEmployeesByAge(36, 36)
+					.stream()
+					.sorted((e1, e2) -> Long.compare(e1.id(), e2.id()))
+					.toArray(Employee[]::new));
+	}
+	
+
+	
 }

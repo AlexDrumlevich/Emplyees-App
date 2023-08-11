@@ -9,7 +9,11 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.security.KeyStore.Entry;
-import java.time.temporal.Temporal;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.util.*;
 
 
@@ -18,7 +22,9 @@ public class CompanyImpl implements Company {
 	private LinkedHashMap<Long, Employee> employees = new LinkedHashMap<>();
 	private TreeMap<Integer, Collection<Employee>> employeesSalary = new TreeMap<>();
 	private Map<String, Collection<Employee>> employeesDepartment = new HashMap<>();
-  
+	private TreeMap<Long, Collection<Employee>> employeesAge = new TreeMap<>();
+	
+	
   //ADD
   @Override
 	public boolean addEmployee(Employee empl) {
@@ -28,10 +34,17 @@ public class CompanyImpl implements Company {
 			res = true;
 			addEmployeeSalary(empl);
 			addEmployeeDepartment(empl);
+			addEmployeeAge(empl);
 		}
 		return  res;
 	}
 
+	private void addEmployeeAge(Employee empl) {
+		LocalDateTime birthDateTime = LocalDateTime.of(empl.birthDate(), LocalTime.of(0, 0));
+		Long birthDayMs = birthDateTime.toInstant(ZoneOffset.UTC).toEpochMilli();
+		employeesAge.computeIfAbsent(birthDayMs, k -> new HashSet<>()).add(empl);
+	}
+	
 	private void addEmployeeSalary(Employee empl) {
 		int salary = empl.salary();
 		employeesSalary.computeIfAbsent(salary, k -> new HashSet<>()).
@@ -50,8 +63,19 @@ public class CompanyImpl implements Company {
 		if(res != null) {
 			removeEmployeeSalary(res);
 			removeEmployeeDepartment(res);
+			removeEmployeeAge(res);
 		}
 		return res;
+	}
+
+	private void removeEmployeeAge(Employee empl) {
+		LocalDateTime birthDateTime = LocalDateTime.of(empl.birthDate(), LocalTime.of(0, 0));
+		Long birthDayMs = birthDateTime.toInstant(ZoneOffset.UTC).toEpochMilli();
+		Collection<Employee> employeesCol = employeesAge.get(birthDayMs);
+		employeesCol.remove(empl);
+		if(employeesCol.isEmpty()) {
+			employeesAge.remove(birthDayMs);
+		}
 	}
 
 	private void removeEmployeeSalary(Employee empl) {
@@ -163,8 +187,23 @@ public class CompanyImpl implements Company {
 
 	@Override
 	public List<Employee> getEmployeesByAge(int ageFrom, int ageTo) {
-		// TODO Auto-generated method stub
-		return null;
+		if(ageFrom > ageTo || ageFrom < 0) {
+			throw new IllegalArgumentException();
+		}
+		//next year starts from beginning of a day after birthday (date to = current day minusYears(ageFrom).minusDays(1))
+		LocalDateTime currentDay = LocalDateTime.of(LocalDate.now(), LocalTime.of(0, 0));
+	
+		return employeesAge.subMap(
+				currentDay.minusYears(ageTo + 1).toInstant(ZoneOffset.UTC).toEpochMilli(),
+				true,
+				currentDay.minusYears(ageFrom).minusDays(1).toInstant(ZoneOffset.UTC).toEpochMilli(),
+				true
+			)
+			.values()
+			.stream()
+			.flatMap(e -> e.stream())
+			.toList();
+
 	}
 
 	@Override
@@ -180,8 +219,13 @@ public class CompanyImpl implements Company {
 
 	@Override
 	public Employee updateDepartment(long id, String newDepartment) {
-		// TODO Auto-generated method stub
-		return null;
+		Employee employee = employees.get(id);
+		if(employee != null) {
+			employee = new Employee(employee.id(), employee.name(), newDepartment, employee.salary(), employee.birthDate());
+			removeEmployee(employee.id());
+			addEmployee(employee);
+		}
+		return employee;
 	}
 	
 }
