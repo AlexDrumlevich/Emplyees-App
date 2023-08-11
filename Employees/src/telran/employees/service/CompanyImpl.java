@@ -135,6 +135,11 @@ public class CompanyImpl implements Company {
 	public void restore(String filePath) {
 		try(ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(filePath))) {
 			employees = (LinkedHashMap<Long, Employee>) objectInputStream.readObject();
+			employees.values().stream().forEach(e -> {
+				addEmployeeAge(e);
+				addEmployeeDepartment(e);
+				addEmployeeSalary(e);
+			});
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
