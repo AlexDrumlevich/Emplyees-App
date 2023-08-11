@@ -245,6 +245,11 @@ class CompanyTest {
 					.stream()
 					.sorted((e1, e2) -> Long.compare(e1.id(), e2.id()))
 					.toArray(Employee[]::new));
+		
+		assertThrowsExactly(IllegalArgumentException.class, () -> company.getEmployeesByAge(10, 9));
+		assertThrowsExactly(IllegalArgumentException.class, () -> company.getEmployeesByAge(-1, 9));
+		assertThrowsExactly(IllegalArgumentException.class, () -> company.getEmployeesByAge(10, -9));
+		
 	}
 	
 
