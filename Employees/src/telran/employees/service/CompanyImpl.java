@@ -115,9 +115,9 @@ public class CompanyImpl implements Company {
 		try(ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(filePath))) {
 			employees = (LinkedHashMap<Long, Employee>) objectInputStream.readObject();
 			employees.values().stream().forEach(e -> {
-				addEmployeeAge(e);
-				addEmployeeDepartment(e);
-				addEmployeeSalary(e);
+				addToMap(e, employeesSalary, e.salary());
+				addToMap(e, employeesAge, LocalDateTime.of(e.birthDate(), LocalTime.of(0, 0)).toInstant(ZoneOffset.UTC).toEpochMilli());
+				addToMap(e, employeesDepartment, e.department());
 			});
 		} catch (IOException e) {
 			e.printStackTrace();
