@@ -32,68 +32,47 @@ public class CompanyImpl implements Company {
 		Employee emplRes = employees.putIfAbsent(empl.id(), empl);
 		if(emplRes == null) {
 			res = true;
-			addEmployeeSalary(empl);
-			addEmployeeDepartment(empl);
-			addEmployeeAge(empl);
+			addToMap(empl, employeesSalary, empl.salary());
+			addToMap(empl, employeesAge, LocalDateTime.of(empl.birthDate(), LocalTime.of(0, 0)).toInstant(ZoneOffset.UTC).toEpochMilli());
+			addToMap(empl, employeesDepartment, empl.department());
 		}
 		return  res;
 	}
 
-	private void addEmployeeAge(Employee empl) {
-		LocalDateTime birthDateTime = LocalDateTime.of(empl.birthDate(), LocalTime.of(0, 0));
-		Long birthDayMs = birthDateTime.toInstant(ZoneOffset.UTC).toEpochMilli();
-		employeesAge.computeIfAbsent(birthDayMs, k -> new HashSet<>()).add(empl);
-	}
-	
-	private void addEmployeeSalary(Employee empl) {
-		int salary = empl.salary();
-		employeesSalary.computeIfAbsent(salary, k -> new HashSet<>()).
-		add(empl);
-	}
-	private void addEmployeeDepartment(Employee empl) {
-		String department = empl.department();
-		employeesDepartment.computeIfAbsent(department, k -> new HashSet<>()).
-		add(empl);
-	}
-	
+
+	/* V.R.   addToMap
+	 *  T - type of key (Integer, String and so on)
+	 *  empl - employee of type Employee
+	 *  map - the map for saving collection of employees grouped
+	 *  by key (salary, department, age and so on)
+	 *  key of type T - the key of the map 
+	 *  (salary, department, age and so on)
+	 */
+  private <T> void addToMap(
+  		Employee empl, Map<T,Collection<Employee>> map, T key ) {
+      map.computeIfAbsent(key, collection -> new HashSet<>()).add(empl);
+  }
+  
 	//REMOVE
 	@Override
 	public Employee removeEmployee(long id) {
 		Employee res = employees.remove(id);
 		if(res != null) {
-			removeEmployeeSalary(res);
-			removeEmployeeDepartment(res);
-			removeEmployeeAge(res);
+			removeFromMap(res, employeesSalary, res.salary());
+			removeFromMap(res, employeesAge, LocalDateTime.of(res.birthDate(), LocalTime.of(0, 0)).toInstant(ZoneOffset.UTC).toEpochMilli());
+			removeFromMap(res, employeesDepartment, res.department());
 		}
 		return res;
 	}
 
-	private void removeEmployeeAge(Employee empl) {
-		LocalDateTime birthDateTime = LocalDateTime.of(empl.birthDate(), LocalTime.of(0, 0));
-		Long birthDayMs = birthDateTime.toInstant(ZoneOffset.UTC).toEpochMilli();
-		Collection<Employee> employeesCol = employeesAge.get(birthDayMs);
-		employeesCol.remove(empl);
-		if(employeesCol.isEmpty()) {
-			employeesAge.remove(birthDayMs);
-		}
-	}
-
-	private void removeEmployeeSalary(Employee empl) {
-		int salary = empl.salary();
-		Collection<Employee> employeesCol = employeesSalary.get(salary);
-		employeesCol.remove(empl);
-		if(employeesCol.isEmpty()) {
-			employeesSalary.remove(salary);
-		}	
-	}
-	private void removeEmployeeDepartment(Employee empl) {
-		String department = empl.department();
-		Collection<Employee> employeesCol = employeesDepartment.get(department);
-		employeesCol.remove(empl);
-		if(employeesCol.isEmpty()) {
-			employeesDepartment.remove(department);
-		}	
-	}
+	private <T> void removeFromMap(
+    		Employee empl, Map<T,Collection<Employee>> map, T key ) {
+        Collection<Employee> collection = map.get(key);
+        collection.remove(empl);
+        if (collection.isEmpty()) {
+        	map.remove(key);
+        }
+    }
 	
 	@Override
 	public Employee getEmployee(long id) {
