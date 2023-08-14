@@ -111,33 +111,6 @@ public class CompanyImpl implements Company {
 	}
 
 	@Override
-	public void restore(String filePath) {
-		try(ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(filePath))) {
-			employees = (LinkedHashMap<Long, Employee>) objectInputStream.readObject();
-			employees.values().stream().forEach(e -> {
-				addToMap(e, employeesSalary, e.salary());
-				addToMap(e, employeesAge, e.birthDate());
-				addToMap(e, employeesDepartment, e.department());
-			});
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		}
-		
-		
-	}
-	
-	@Override
-	public void save(String filePath) {
-		try(ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(filePath))) {
-			objectOutputStream.writeObject(employees);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
-	@Override
 	public List<Employee> getEmployeesByDepartment(String department) {		
 		//complexity O[1] if employeesDepartment implements List
 		Collection<Employee> collectionEmployees = employeesDepartment.get(department);
