@@ -171,8 +171,8 @@ public class CompanyImpl implements Company {
 
 	@Override
 	public List<Employee> getEmployeesByAge(int ageFrom, int ageTo) {
-		LocalDate dateTo = LocalDate.now().minusYears(ageFrom);
-		LocalDate dateFrom = LocalDate.now().minusYears(ageTo);
+		LocalDate dateTo = LocalDate.now().minusYears(ageFrom).minusDays(1);
+		LocalDate dateFrom = LocalDate.now().minusYears(ageTo + 1);
 		return employeesAge.subMap(dateFrom, true, dateTo, true)
 				.values()
 				.stream()

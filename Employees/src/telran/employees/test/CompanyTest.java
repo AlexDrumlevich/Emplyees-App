@@ -195,6 +195,7 @@ class CompanyTest {
 	//has to be corrected depends on time test executing (age changes during the time)
 	void getEmployeesByAgeTest() {
 		assertTrue(company.getEmployeesByAge(10, 12).isEmpty());
+		assertTrue(company.getEmployeesByAge(-3, -1).isEmpty());
 		
 		Employee[] expectedAge1 = employees;
 		assertArrayEquals(expectedAge1, 
@@ -212,8 +213,8 @@ class CompanyTest {
 		//LocalDate has to be corrected 
 			//employee6: current day; current month; current year - 37
 			//employee7: current day-1; current month; current year - 37
-		Employee employee6 = new Employee(6, "6", DEP1, SALARY1, LocalDate.of(1986, 8, 12));
-		Employee employee7 = new Employee(7, "7", DEP1, SALARY1, LocalDate.of(1986, 8, 11));
+		Employee employee6 = new Employee(6, "6", DEP1, SALARY1, LocalDate.of(1986, 8, 14));
+		Employee employee7 = new Employee(7, "7", DEP1, SALARY1, LocalDate.of(1986, 8, 13));
 		company.addEmployee(employee6);
 		company.addEmployee(employee7);
 		
@@ -231,7 +232,6 @@ class CompanyTest {
 					
 		
 		assertThrowsExactly(IllegalArgumentException.class, () -> company.getEmployeesByAge(10, 9));
-		assertThrowsExactly(IllegalArgumentException.class, () -> company.getEmployeesByAge(-1, 9));
 		assertThrowsExactly(IllegalArgumentException.class, () -> company.getEmployeesByAge(10, -9));
 		
 	}
