@@ -22,7 +22,7 @@ public class CompanyImpl implements Company {
 	private LinkedHashMap<Long, Employee> employees = new LinkedHashMap<>();
 	private TreeMap<Integer, Collection<Employee>> employeesSalary = new TreeMap<>();
 	private Map<String, Collection<Employee>> employeesDepartment = new HashMap<>();
-	private TreeMap<Long, Collection<Employee>> employeesAge = new TreeMap<>();
+	private TreeMap<LocalDate, Collection<Employee>> employeesAge = new TreeMap<>();
 	
 	
   //ADD
@@ -33,7 +33,7 @@ public class CompanyImpl implements Company {
 		if(emplRes == null) {
 			res = true;
 			addToMap(empl, employeesSalary, empl.salary());
-			addToMap(empl, employeesAge, LocalDateTime.of(empl.birthDate(), LocalTime.of(0, 0)).toInstant(ZoneOffset.UTC).toEpochMilli());
+			addToMap(empl, employeesAge, empl.birthDate());
 			addToMap(empl, employeesDepartment, empl.department());
 		}
 		return  res;
@@ -59,7 +59,7 @@ public class CompanyImpl implements Company {
 		Employee res = employees.remove(id);
 		if(res != null) {
 			removeFromMap(res, employeesSalary, res.salary());
-			removeFromMap(res, employeesAge, LocalDateTime.of(res.birthDate(), LocalTime.of(0, 0)).toInstant(ZoneOffset.UTC).toEpochMilli());
+			removeFromMap(res, employeesAge, res.birthDate());
 			removeFromMap(res, employeesDepartment, res.department());
 		}
 		return res;
@@ -116,7 +116,7 @@ public class CompanyImpl implements Company {
 			employees = (LinkedHashMap<Long, Employee>) objectInputStream.readObject();
 			employees.values().stream().forEach(e -> {
 				addToMap(e, employeesSalary, e.salary());
-				addToMap(e, employeesAge, LocalDateTime.of(e.birthDate(), LocalTime.of(0, 0)).toInstant(ZoneOffset.UTC).toEpochMilli());
+				addToMap(e, employeesAge, e.birthDate());
 				addToMap(e, employeesDepartment, e.department());
 			});
 		} catch (IOException e) {
@@ -171,23 +171,13 @@ public class CompanyImpl implements Company {
 
 	@Override
 	public List<Employee> getEmployeesByAge(int ageFrom, int ageTo) {
-		if(ageFrom > ageTo || ageFrom < 0) {
-			throw new IllegalArgumentException();
-		}
-		//next year starts from beginning of a day after birthday (date to = current day minusYears(ageFrom).minusDays(1))
-		LocalDateTime currentDay = LocalDateTime.of(LocalDate.now(), LocalTime.of(0, 0));
-	
-		return employeesAge.subMap(
-				currentDay.minusYears(ageTo + 1).toInstant(ZoneOffset.UTC).toEpochMilli(),
-				true,
-				currentDay.minusYears(ageFrom).minusDays(1).toInstant(ZoneOffset.UTC).toEpochMilli(),
-				true
-			)
-			.values()
-			.stream()
-			.flatMap(e -> e.stream())
-			.toList();
-
+		LocalDate dateTo = LocalDate.now().minusYears(ageFrom);
+		LocalDate dateFrom = LocalDate.now().minusYears(ageTo);
+		return employeesAge.subMap(dateFrom, true, dateTo, true)
+				.values()
+				.stream()
+				.flatMap(col -> col.stream())
+				.toList();
 	}
 
 	@Override
