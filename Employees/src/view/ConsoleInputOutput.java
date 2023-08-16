@@ -1,4 +1,4 @@
-package view.console;
+package view;
 
 
 import java.io.*;
@@ -28,12 +28,12 @@ public class ConsoleInputOutput {
 
 	//line corresponds to predicate
 	public String readString(String prompt, String errorPrompt, Predicate<String> predicate) {
-		String string = readString(prompt);
-		while (!predicate.test(string)) {
-			output.println(errorPrompt);
-			string = readString(prompt);
-		}
-		return string;
+		return readObject(prompt, errorPrompt, string -> {
+			if(!predicate.test(string)) {
+				throw new IllegalArgumentException("");
+			}
+			return string;
+		});
 	}
 
 	//line corresponds to options
