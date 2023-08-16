@@ -1,4 +1,4 @@
-package view.tests;
+package telran.view.tests;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -12,7 +12,7 @@ import javax.sound.sampled.Line;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import view.ConsoleInputOutput;
+import telran.view.ConsoleInputOutput;
 
 class ConsoleInputOutputTest {
 ConsoleInputOutput io = new ConsoleInputOutput();
