@@ -36,6 +36,15 @@ public interface InputOutput {
 	default int readInt(String prompt, String errorPrompt) {
 		return readObject(prompt, errorPrompt, Integer::parseInt);
 	}
+	
+	default int readIntPositive(String prompt, String errorPrompt) {
+		
+		int value = readObject(prompt, errorPrompt, Integer::parseInt);
+		if(value < 1) {
+			throw new IllegalArgumentException(errorPrompt);
+		}
+		return value;
+	}
 
 	default int readInt(String prompt, String errorPrompt, int min, int max) {
 		return readObject(String.format("%s[%d - %d] ", prompt, min, max), errorPrompt,
