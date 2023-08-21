@@ -61,6 +61,18 @@ public interface InputOutput {
 
 		});
 	}
+	
+	default int[] readFromToIntsPositive(String promt, String errorPrompt) {
+		writeLine(promt);
+		int[] ints =  new int[] {
+			readIntPositive("Enter first value: ", ""),
+			readIntPositive("Enter second value: ", "")
+		};
+		if(ints[0] > ints[1]) {
+			throw new IllegalArgumentException(errorPrompt);
+		}
+		return ints;
+	}
 
 	default long readLong(String prompt, String errorPrompt) {
 		
