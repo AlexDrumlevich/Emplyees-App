@@ -78,6 +78,12 @@ public class CompanyController {
 		}
 	}
 	
+	static private <T> void writeEmptyPossibleList(List<T> list, InputOutput io) {
+		if(list.isEmpty())
+			io.writeLine("List is empty");
+		else
+			list.stream().forEach(e -> io.writeLine(e.toString()));
+	}
 	
 	static void addEmployeeItem(InputOutput io) {
 		//id
@@ -121,48 +127,34 @@ public class CompanyController {
 	}
 
 	static void getEmployeesItem(InputOutput io) {
-		List<Employee> empoyees = company.getEmployees();
-		if(empoyees.isEmpty())
-			io.writeLine("List of employee is empty");
-		else
-			empoyees.stream().forEach(e -> io.writeLine(e.toString()));
+		writeEmptyPossibleList(company.getEmployees(), io);
 	}
 
 	static void getDepartmentSalaryDistributionItem(InputOutput io) {
-		company.getDepartmentSalaryDistribution().forEach(io::writeLine);
-
+		writeEmptyPossibleList(company.getDepartmentSalaryDistribution(), io);
 	}
+	
 	static void getSalaryDistributionItem(InputOutput io) {
 		int distribution = io.readIntPositive("Enter distribution amount", "Wrong value");
-		company.getSalaryDistribution(distribution).forEach(io::writeLine);
+		writeEmptyPossibleList(company.getSalaryDistribution(distribution), io);
 	}
 
 	static void getEmployeesByDepartmentItem(InputOutput io) {
 		String department = io.readString(String.format("Enter department: %s", departments.toString()), "Wrong department", departments);
-		List<Employee> empoyees = company.getEmployeesByDepartment(department);
-		if(empoyees.isEmpty())
-			io.writeLine("List of employee is empty");
-		else
-			empoyees.stream().forEach(e -> io.writeLine(e.toString()));
+		writeEmptyPossibleList(company.getEmployeesByDepartment(department), io);
 	}
 
 	static void getEmployeesBySalaryItem(InputOutput io) {
 		int[] fromToInts = io.readFromToIntsPositive("Enter salary range", "Wrong value, \"from\" value must be lower than \"to\" value");
-		List<Employee> empoyees = company.getEmployeesBySalary(fromToInts[0], fromToInts[1]);
-		if(empoyees.isEmpty())
-			io.writeLine("List of employee is empty");
-		else
-			empoyees.stream().forEach(e -> io.writeLine(e.toString()));
+		writeEmptyPossibleList(company.getEmployeesBySalary(fromToInts[0], fromToInts[1]), io);
 	}
 
 	static void getEmployeesByAgeItem(InputOutput io) {
 		int[] fromToInts = io.readFromToIntsPositive("Enter age range", "Wrong value, \"from\" value must be lower than \"to\" value");
-		List<Employee> empoyees = company.getEmployeesByAge(fromToInts[0], fromToInts[1]);
-		if(empoyees.isEmpty())
-			io.writeLine("List of employee is empty");
-		else
-			empoyees.stream().forEach(e -> io.writeLine(e.toString()));
+		writeEmptyPossibleList(company.getEmployeesByAge(fromToInts[0], fromToInts[1]), io);
 	}
+	
+
 	
 	static void updateSalaryItem(InputOutput io) {
 		try {
