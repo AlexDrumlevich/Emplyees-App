@@ -2,7 +2,13 @@ package telran.employees;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import telran.employees.dto.Employee;
 import telran.employees.dto.FromTo;
@@ -21,6 +27,34 @@ public class CompanyProtocol implements ApplProtocol {
 		this.company = company;
 	}
 
+	ReentrantReadWriteLock reentrantReadWriteLock = new ReentrantReadWriteLock(); 
+	Lock readLock = reentrantReadWriteLock.readLock();
+	Lock writeLock = reentrantReadWriteLock.writeLock();
+	private Function<Serializable, Serializable> readLockSupplier = new Function<Serializable, Serializable>() {
+		@Override
+		public Serializable apply(Serializable t) {
+			readLock.lock();
+			try {
+				return t;
+			} finally {
+				readLock.unlock();
+			}
+		}
+	};
+	
+	private Function<Serializable, Serializable> writeLockSupplier = new Function<Serializable, Serializable>() {
+		@Override
+		public Serializable apply(Serializable t) {
+			writeLock.lock();
+			try {
+				return t;
+			} finally {
+				writeLock.unlock();
+			}
+		}
+	};
+	
+	
 	@Override
 	public Response getResponse(Request request) {
 		Response response = null;
@@ -28,17 +62,17 @@ public class CompanyProtocol implements ApplProtocol {
 		Serializable data = request.requestData();
 		try {
 			Serializable responseData = switch(requestType) {
-			case "employee/add" -> employee_add(data);
-			case "employee/get" -> employee_get(data);
-			case "employees/get" -> employees_get(data);
-			case "employees/department" -> employees_department(data);
-			case "employees/salary" -> employees_salary(data);
-			case "employees/age" -> employees_age(data);
-			case "department/update" -> department_update(data);
-			case "salary/update" -> salary_update(data);
-			case "employee/remove" -> employee_remove(data);
-			case "department/salary/distribution" -> department_salary_distribution(data);
-			case "salary/distribution" -> salary_distribution(data);
+			case "employee/add" -> writeLockSupplier.apply(employee_add(data));
+			case "employee/get" ->  readLockSupplier.apply(employee_get(data));
+			case "employees/get" -> readLockSupplier.apply(employees_get(data));
+			case "employees/department" -> readLockSupplier.apply(employees_department(data));
+			case "employees/salary" -> readLockSupplier.apply(employees_salary(data));
+			case "employees/age" -> readLockSupplier.apply(employees_age(data));
+			case "department/update" ->  writeLockSupplier.apply(department_update(data));
+			case "salary/update" -> writeLockSupplier.apply(salary_update(data));
+			case "employee/remove" -> writeLockSupplier.apply(employee_remove(data));
+			case "department/salary/distribution" -> readLockSupplier.apply(department_salary_distribution(data));
+			case "salary/distribution" -> readLockSupplier.apply(salary_distribution(data));
 			default -> new Response(ResponseCode.WRONG_TYPE, requestType +
 			    		" is unsupported in the Company Protocol");
 			};
@@ -82,6 +116,10 @@ public class CompanyProtocol implements ApplProtocol {
 	}
 	
 	private Serializable department_salary_distribution(Serializable data) {
+		Serializable a = (Serializable) company.getDepartmentSalaryDistribution();
+		List<Employee> b = (List<Employee>) a;
+		System.out.println((a == b) ? "==" : "!=");
+		
 		return new ArrayList<> (company.getDepartmentSalaryDistribution());
 	}
 	
