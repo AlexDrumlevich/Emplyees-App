@@ -1,178 +1,192 @@
 package telran.employees.service;
+
+import java.util.List;
+import java.util.concurrent.locks.*;
 import java.util.stream.Collectors;
+
 import telran.employees.dto.DepartmentSalary;
 import telran.employees.dto.Employee;
 import telran.employees.dto.SalaryDistribution;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.security.KeyStore.Entry;
-import java.time.Instant;
+
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneOffset;
 import java.util.*;
 
-
 public class CompanyImpl implements Company {
+	LinkedHashMap<Long, Employee> employees = new LinkedHashMap<>();
+	TreeMap<Integer, Collection<Employee>> employeesSalary = new TreeMap<>();
+	TreeMap<LocalDate, Collection<Employee>> employeesAge = new TreeMap<>();
+	HashMap<String, Collection<Employee>> employeesDepartment = new HashMap<>();
+	ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+	Lock readLock = readWriteLock.readLock();
+	Lock writeLock = readWriteLock.writeLock();
 
-	private LinkedHashMap<Long, Employee> employees = new LinkedHashMap<>();
-	private TreeMap<Integer, Collection<Employee>> employeesSalary = new TreeMap<>();
-	private Map<String, Collection<Employee>> employeesDepartment = new HashMap<>();
-	private TreeMap<LocalDate, Collection<Employee>> employeesAge = new TreeMap<>();
-	
-	
-  //ADD
-  @Override
+	@Override
 	public boolean addEmployee(Employee empl) {
-		boolean res = false;
-		Employee emplRes = employees.putIfAbsent(empl.id(), empl);
-		if(emplRes == null) {
-			res = true;
-			addToMap(empl, employeesSalary, empl.salary());
-			addToMap(empl, employeesAge, empl.birthDate());
-			addToMap(empl, employeesDepartment, empl.department());
+		try {
+			writeLock.lock();
+			boolean res = false;
+			Employee emplRes = employees.putIfAbsent(empl.id(), empl);
+			if (emplRes == null) {
+				res = true;
+				addEmployeeSalary(empl);
+				addEmployeeAge(empl);
+				addEmployeeDepartment(empl);
+			}
+			return res;
+		} finally {
+			writeLock.unlock();
 		}
-		return  res;
 	}
 
+	private <T> void addToIndex(Employee empl, T key, Map<T, Collection<Employee>> map) {
+		map.computeIfAbsent(key, k -> new HashSet<>()).add(empl);
+	}
+	private <T> void removeFromIndex(Employee empl, T key, Map<T, Collection<Employee>> map) {
 
-	/* V.R.   addToMap
-	 *  T - type of key (Integer, String and so on)
-	 *  empl - employee of type Employee
-	 *  map - the map for saving collection of employees grouped
-	 *  by key (salary, department, age and so on)
-	 *  key of type T - the key of the map 
-	 *  (salary, department, age and so on)
-	 */
-  private <T> void addToMap(
-  		Employee empl, Map<T,Collection<Employee>> map, T key ) {
-      map.computeIfAbsent(key, collection -> new HashSet<>()).add(empl);
-  }
-  
-	//REMOVE
+		Collection<Employee> employeesCol = map.get(key);
+		employeesCol.remove(empl);
+		if (employeesCol.isEmpty()) {
+			map.remove(key);
+		}
+	}
+
+	private void addEmployeeSalary(Employee empl) {
+		addToIndex(empl, empl.salary(), employeesSalary);
+
+	}
+
+	private void addEmployeeAge(Employee empl) {
+		addToIndex(empl, empl.birthDate(), employeesAge);
+
+	}
+
+	private void addEmployeeDepartment(Employee empl) {
+		addToIndex(empl, empl.department(), employeesDepartment);
+
+	}
+
 	@Override
 	public Employee removeEmployee(long id) {
-		Employee res = employees.remove(id);
-		if(res != null) {
-			removeFromMap(res, employeesSalary, res.salary());
-			removeFromMap(res, employeesAge, res.birthDate());
-			removeFromMap(res, employeesDepartment, res.department());
+		try {
+			writeLock.lock();
+			Employee res = employees.remove(id);
+			if (res != null) {
+				removeEmployeeSalary(res);
+				removeEmployeeAge(res);
+				removeEmployeeDepartment(res);
+			}
+			return res;
+		} finally {
+			writeLock.unlock();
 		}
-		return res;
 	}
 
-	private <T> void removeFromMap(
-    		Employee empl, Map<T,Collection<Employee>> map, T key ) {
-        Collection<Employee> collection = map.get(key);
-        collection.remove(empl);
-        if (collection.isEmpty()) {
-        	map.remove(key);
-        }
-    }
 	
+
+	private void removeEmployeeSalary(Employee empl) {
+		int salary = empl.salary();
+		removeFromIndex(empl, salary, employeesSalary);
+
+	}
+
+	private void removeEmployeeAge(Employee empl) {
+		removeFromIndex(empl, empl.birthDate(), employeesAge);
+
+	}
+
+	private void removeEmployeeDepartment(Employee empl) {
+		removeFromIndex(empl, empl.department(), employeesDepartment);
+
+	}
+
 	@Override
 	public Employee getEmployee(long id) {
-		return employees.get(id);
+
+		try {
+			readLock.lock();
+			return employees.get(id);
+		} finally {
+			readLock.unlock();
+		}
 	}
 
 	@Override
 	public List<Employee> getEmployees() {
+
 		return new ArrayList<>(employees.values());
 	}
 
 	@Override
 	public List<DepartmentSalary> getDepartmentSalaryDistribution() {
-		
+
 		return employees.values().stream()
-				.collect(Collectors.groupingBy(Employee::department,
-						Collectors.averagingInt(Employee::salary)))
-				.entrySet().stream().map(e -> new DepartmentSalary(e.getKey(),
-						e.getValue())).toList();
+				.collect(Collectors.groupingBy(Employee::department, Collectors.averagingInt(Employee::salary)))
+				.entrySet().stream().map(e -> new DepartmentSalary(e.getKey(), e.getValue())).toList();
 	}
 
 	@Override
 	public List<SalaryDistribution> getSalaryDistribution(int interval) {
-		return employees
-			.values()
-			.stream()
-			.collect(Collectors.groupingBy(employee -> 
-				    Integer.valueOf(employee.salary() / interval), 
-					Collectors.counting()))
-			.entrySet()
-			.stream()
-			.filter(entry -> entry.getValue() != 0)
-			.map(entry -> new SalaryDistribution(entry.getKey() * interval, entry.getKey() * interval + interval - 1, entry.getValue().intValue()))
-			.toList();
 
+		return employees.values().stream()
+				.collect(Collectors.groupingBy(e -> e.salary() / interval, Collectors.counting())).entrySet().stream()
+				.map(e -> new SalaryDistribution(e.getKey() * interval, e.getKey() * interval + interval - 1,
+						e.getValue().intValue()))
+				.sorted((sd1, sd2) -> Integer.compare(sd1.minSalary(), sd2.minSalary())).toList();
 	}
 
 	@Override
-	public List<Employee> getEmployeesByDepartment(String department) {		
-		//complexity O[1] if employeesDepartment implements List
-		Collection<Employee> collectionEmployees = employeesDepartment.get(department);
-		List<Employee> listEmployee;
-		if(collectionEmployees != null) {
-			if(collectionEmployees instanceof List)
-				listEmployee = (List<Employee>)collectionEmployees;
-			else
-				listEmployee = collectionEmployees.stream().toList();
-		} else {
-			listEmployee = new ArrayList<>();
+	public List<Employee> getEmployeesByDepartment(String department) {
+		Collection<Employee> employeesCol = employeesDepartment.get(department);
+		ArrayList<Employee> res = new ArrayList<>();
+		if (employeesCol != null) {
+			res.addAll(employeesCol);
 		}
-		return listEmployee;
-		
-		//the other way complexity O[n] or O[1] ?
-		//return employeesDepartment.get(department).stream().toList();
+		return res;
 	}
 
 	@Override
 	public List<Employee> getEmployeesBySalary(int salaryFrom, int salaryTo) {
-		if(salaryFrom > salaryTo || salaryFrom < 0) {
-			throw new IllegalArgumentException();
-		}
-		return employeesSalary
-					.subMap(salaryFrom, true, salaryTo, true)
-					.values()
-					.stream()
-					.flatMap(e -> e.stream())
-					.toList();
+
+		return employeesSalary.subMap(salaryFrom, true, salaryTo, true).values().stream()
+				.flatMap(col -> col.stream().sorted((empl1, empl2) -> Long.compare(empl1.id(), empl2.id())))
+
+				.toList();
 	}
 
 	@Override
 	public List<Employee> getEmployeesByAge(int ageFrom, int ageTo) {
-		LocalDate dateTo = LocalDate.now().minusYears(ageFrom).minusDays(1);
-		LocalDate dateFrom = LocalDate.now().minusYears(ageTo + 1);
-		return employeesAge.subMap(dateFrom, true, dateTo, true)
-				.values()
-				.stream()
-				.flatMap(col -> col.stream())
+		LocalDate dateTo = LocalDate.now().minusYears(ageFrom);
+		LocalDate dateFrom = LocalDate.now().minusYears(ageTo);
+		return employeesAge.subMap(dateFrom, true, dateTo, true).values().stream()
+				.flatMap(col -> col.stream()
+				.sorted((empl1, empl2) -> Long.compare(empl1.id(), empl2.id())))
 				.toList();
 	}
 
 	@Override
 	public Employee updateSalary(long id, int newSalary) {
-		Employee employee = employees.get(id);
-		if(employee != null) {
-			employee = new Employee(employee.id(), employee.name(), employee.department(), newSalary, employee.birthDate());
-			removeEmployee(employee.id());
-			addEmployee(employee);
+		try {
+			writeLock.lock();
+			Employee empl = removeEmployee(id);
+			if (empl != null) {
+				Employee newEmployee = new Employee(id, empl.name(), empl.department(), newSalary, empl.birthDate());
+				addEmployee(newEmployee);
+			}
+			return empl;
+		} finally {
+			writeLock.unlock();
 		}
-		return employee;
 	}
 
 	@Override
 	public Employee updateDepartment(long id, String newDepartment) {
-		Employee employee = employees.get(id);
-		if(employee != null) {
-			employee = new Employee(employee.id(), employee.name(), newDepartment, employee.salary(), employee.birthDate());
-			removeEmployee(employee.id());
-			addEmployee(employee);
+		Employee empl = removeEmployee(id);
+		if(empl != null) {
+			Employee newEmployee = new Employee(id, empl.name(),
+					newDepartment, empl.salary(), empl.birthDate());
+			addEmployee(newEmployee);
 		}
-		return employee;
+		return empl;
 	}
-	
+
 }
