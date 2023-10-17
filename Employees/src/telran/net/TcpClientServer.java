@@ -15,7 +15,9 @@ public class TcpClientServer implements Runnable {
 			TcpServer tcpServer) throws IOException {
 		this.socket = socket;
 		this.socket.setSoTimeout(TcpServer.IDLE_TIMEOUT);
+	
 		input = new ObjectInputStream(socket.getInputStream());
+		
 		output = new ObjectOutputStream(socket.getOutputStream());
 		this.protocol = protocol;
 		this.tcpServer = tcpServer;
@@ -23,19 +25,23 @@ public class TcpClientServer implements Runnable {
 
 	@Override
 	public void run() {
-		
 			while(!tcpServer.isShutdown) {
 				try {
 				Request request = (Request) input.readObject();
 				Response response = protocol.getResponse(request);
 				output.writeObject(response);
+				idleTime = 0;
 				
 				} catch(SocketTimeoutException e) {
+					
 					idleTime += TcpServer.IDLE_TIMEOUT;
 					if(idleTime > TOTAL_IDLE_TIMEOUT &&
 							tcpServer.clientsCounter.get() > tcpServer.nThreads) {
 						try {
+							socket.shutdownInput();
 							socket.close();
+							
+							tcpServer.clientsCounter.decrementAndGet();
 							
 						} catch (IOException e1) {
 							e1.printStackTrace();
@@ -45,7 +51,10 @@ public class TcpClientServer implements Runnable {
 					}
 					if(tcpServer.isShutdown) {
 						try {
+							socket.shutdownInput();
 							socket.close();
+							
+							tcpServer.clientsCounter.decrementAndGet();
 							
 						} catch (IOException e1) {
 							e1.printStackTrace();
@@ -55,14 +64,16 @@ public class TcpClientServer implements Runnable {
 					}
 				}
 				catch(EOFException e) {
-					System.out.println("client closed normally connection");
+					System.out.println("client closed normally connection --");
+					tcpServer.clientsCounter.decrementAndGet();
 					break;
 				} catch(Exception e) {
 					System.out.println("client closed abnormally connection "
 				+ e.getMessage());
+					tcpServer.clientsCounter.decrementAndGet();
 					break;
 				}
-				tcpServer.clientsCounter.decrementAndGet();
+				
 				
 			}
 			
