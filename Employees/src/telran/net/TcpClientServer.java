@@ -38,7 +38,6 @@ public class TcpClientServer implements Runnable {
 					if(idleTime > TOTAL_IDLE_TIMEOUT &&
 							tcpServer.clientsCounter.get() > tcpServer.nThreads) {
 						try {
-							socket.shutdownInput();
 							socket.close();
 							
 							tcpServer.clientsCounter.decrementAndGet();
@@ -51,7 +50,6 @@ public class TcpClientServer implements Runnable {
 					}
 					if(tcpServer.isShutdown) {
 						try {
-							socket.shutdownInput();
 							socket.close();
 							
 							tcpServer.clientsCounter.decrementAndGet();

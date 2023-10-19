@@ -1,6 +1,7 @@
 package telran.employees;
 
 import java.io.Serializable;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 
 import telran.employees.dto.Employee;
@@ -23,8 +24,18 @@ public class CompanyProtocol implements ApplProtocol {
 	@Override
 	public Response getResponse(Request request) {
 		Response response = null;
-		String requestType = request.requestType();
+		
+		//String requestType = request.requestType();
+		String requestType = request.requestType().replace("/", "_");
 		Serializable data = request.requestData();
+		
+		try {
+			Class<?> clazz = this.getClass();
+			Method method = clazz.getDeclaredMethod(requestType, Serializable.class);
+			method.setAccessible(true);
+			Serializable responseData = (Serializable) method.invoke(this, data);
+
+		/*
 		try {
 			Serializable responseData = switch(requestType) {
 			case "employee/add" -> employee_add(data);
@@ -42,10 +53,15 @@ public class CompanyProtocol implements ApplProtocol {
 			    default -> new Response(ResponseCode.WRONG_TYPE, requestType +
 			    		" is unsupported in the Company Protocol");
 			};
+			*/
 			response = (responseData instanceof Response) ? 
 					(Response) responseData :
 				new Response(ResponseCode.OK, responseData);
-			
+		
+	
+		}catch (NoSuchMethodException e) {
+			response = new Response(ResponseCode.WRONG_TYPE, requestType +
+		    		" is unsupported in the Company Protocol");
 		} catch (Exception e) {
 			response = new Response(ResponseCode.WRONG_DATA, e.toString());
 		}
