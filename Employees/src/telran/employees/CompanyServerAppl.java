@@ -16,6 +16,8 @@ public class CompanyServerAppl {
 		fileName = args.length > 0 ? args[0] : DEFAULT_FILE_NAME;
 		Company company = new CompanyImpl();
 		company.restore(fileName);
+		System.out.println(fileName);
+		System.out.println(DEFAULT_FILE_NAME);
 		TcpServer tcpServer = new TcpServer(PORT, new CompanyProtocol(company));
 		Thread thread = new Thread(tcpServer);
 		thread.start();
@@ -26,7 +28,7 @@ public class CompanyServerAppl {
 			System.out.println("for shutdown enter should be 'exit'");
 		}
 		tcpServer.shutdown();
-		company.save(DEFAULT_FILE_NAME);
+		company.save(fileName);
 
 }
 }
